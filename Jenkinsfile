@@ -1,45 +1,47 @@
-@Library("Shared") _
-pipeline{
-    
-    agent { label "vinod"}
-    
-    stages{
+@Library("shared-lib") _
+pipeline {
+    agent { label "one" }
+
+    stages {
         
-        stage("Hello"){
+        stage('hello'){
             steps{
                 script{
                     hello()
                 }
+            }    
+        }
+        stage('Code') {
+            steps {
+                echo "Cloning the repository"
+                git url: "https://github.com/saaaad8/django-notes-app.git", branch: "main"
             }
         }
-        stage("Code"){
-            steps{
-               script{
-                clone("https://github.com/LondheShubham153/django-notes-app.git","main")
-               }
-                
+
+        stage('Build') {
+            steps {
+                echo "Building the Docker image"
+                sh "docker build -t saaddocker419/notes-app:latest ."
             }
         }
-        stage("Build"){
-            steps{
-                script{
-                docker_build("notes-app","latest","trainwithshubham")
+
+        stage('Push to Docker Hub') {
+            steps {
+                echo "Pushing the Docker image to Docker Hub"
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-jenkins') {
+                        sh "docker push saaddocker419/notes-app:latest"
+                    }
                 }
             }
         }
-        stage("Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("notes-app","latest","trainwithshubham")
-                }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying the application"
+                sh "docker compose up -d"
             }
         }
-        stage("Deploy"){
-            steps{
-                echo "This is deploying the code"
-                sh "docker compose down && docker compose up -d"
-            }
-        }
+
     }
 }
-
