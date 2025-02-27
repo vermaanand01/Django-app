@@ -1,20 +1,33 @@
-FROM python:3.9
+FROM amazonlinux:2
 
+# Set the working directory in the container
 WORKDIR /app/backend
 
-COPY requirements.txt /app/backend
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y gcc default-libmysqlclient-dev pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+# Install system dependencies using yum
+RUN yum update -y && \
+    yum install -y \
+    gcc \
+    mysql-devel \
+    pkgconfig \
+    python3 \
+    python3-pip \
+    && yum clean all
 
+# Ensure pip is up-to-date
+RUN python3 -m pip install --upgrade pip
 
-# Install app dependencies
-RUN pip install mysqlclient
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the requirements file first for caching
+COPY requirements.txt /app/backend/
 
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code to the container
 COPY . /app/backend
 
+# Expose port 8000 for Django
 EXPOSE 8000
-#RUN python manage.py migrate
-#RUN python manage.py makemigrations
+
+# Run migrations and start the Django app
+CMD python3 manage.py migrate && \
+    python3 manage.py runserver 0.0.0.0:8000
