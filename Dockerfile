@@ -18,4 +18,6 @@ COPY . /app/backend
 EXPOSE 8000
 #RUN python manage.py migrate
 #RUN python manage.py makemigrations
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+# ... [other Dockerfile lines remain unchanged]
+
+CMD ["sh", "-c", "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"]
